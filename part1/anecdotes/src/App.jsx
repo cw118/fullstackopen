@@ -13,8 +13,43 @@ const App = () => {
   ];
 
   const [selected, setSelected] = useState(0);
+  const [points, setPoints] = useState(new Uint8Array(anecdotes.length));
+  const [mostVotes, setMostVotes] = useState(0);
 
-  return <div>{anecdotes[selected]}</div>;
+  const handleClick = () => {
+    const selectedIdx = Math.floor(Math.random() * anecdotes.length);
+
+    setSelected(selectedIdx);
+  };
+
+  const vote = () => {
+    const pointsCopy = [...points];
+    pointsCopy[selected]++;
+    setPoints(pointsCopy);
+
+    if (pointsCopy[selected] > pointsCopy[mostVotes]) {
+      setMostVotes(selected);
+    }
+  };
+
+  return (
+    <div>
+      <h1>Anecdote of the day</h1>
+      <p>{anecdotes[selected]}</p>
+      <p>
+        has {points[selected]} vote{points[selected] == 1 ? "" : "s"}
+      </p>
+
+      <button onClick={vote}>vote</button>
+      <button onClick={handleClick}>Display random anecdote</button>
+
+      <h1>Anecdote with most votes</h1>
+      <p>{anecdotes[mostVotes]}</p>
+      <p>
+        has {points[mostVotes]} vote{points[mostVotes] == 1 ? "" : "s"}
+      </p>
+    </div>
+  );
 };
 
 export default App;

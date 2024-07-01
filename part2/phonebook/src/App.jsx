@@ -1,18 +1,38 @@
 import { useState, useEffect } from "react";
+import personService from "./server/persons";
 import Filter from "./components/Filter";
 import PersonForm from "./components/PersonForm";
 import Persons from "./components/Persons";
-import personService from "./server/persons";
+import Notification from "./components/Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [newNumber, setNewNumber] = useState("");
   const [nameFilter, setNameFilter] = useState("");
+  const [message, setMessage] = useState({
+    message: null,
+    messageColor: "green",
+  });
 
   useEffect(() => {
     personService.getAll().then((persons) => setPersons(persons));
   }, []);
+
+  const handleMessage = (msg, msgColor = "green", time = 1500) => {
+    setMessage({
+      message: msg,
+      messageColor: msgColor,
+    });
+    setTimeout(
+      () =>
+        setMessage({
+          message: null,
+          messageColor: msgColor,
+        }),
+      time
+    );
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -29,13 +49,23 @@ const App = () => {
           name: existingPerson.name,
           number: newNumber,
         };
-        personService.update(existingPerson.id, updatedPerson).then((person) =>
-          // update returns the object containing the updated person info
-          setPersons(
-            // recreate persons, but replace the person being updated with their updated info
-            persons.map((p) => (p.id === existingPerson.id ? person : p))
+        personService
+          .update(existingPerson.id, updatedPerson)
+          .then((person) =>
+            // update returns the object containing the updated person info
+            setPersons(
+              // recreate persons, but replace the person being updated with their updated info
+              persons.map((p) => (p.id === existingPerson.id ? person : p))
+            )
           )
-        );
+          .catch((err) => {
+            handleMessage(
+              `Information of ${existingPerson.name} has already been removed from server`,
+              "red"
+            );
+          });
+
+        handleMessage(`Updated ${existingPerson.name}!`);
       }
     } else {
       const newPerson = {
@@ -46,6 +76,8 @@ const App = () => {
       personService
         .create(newPerson)
         .then((person) => setPersons(persons.concat(person)));
+
+      handleMessage(`Added ${newName}!`);
     }
 
     setNewName("");
@@ -62,6 +94,10 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification
+        message={message.message}
+        messageColor={message.messageColor}
+      />
       <Filter
         dataFilter={nameFilter}
         onChange={(e) => setNameFilter(e.target.value)}
